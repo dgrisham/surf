@@ -25,7 +25,7 @@ static Parameter defconfig[ParameterLast] = {
 	[DNSPrefetch]         =       { { .i = 0 },     },
 	[Ephemeral]           =       { { .i = 0 },     },
 	[FileURLsCrossAccess] =       { { .i = 0 },     },
-	[FontSize]            =       { { .i = 12 },    },
+	[FontSize]            =       { { .i = 16 },    },
 	[FrameFlattening]     =       { { .i = 0 },     },
 	[Geolocation]         =       { { .i = 0 },     },
 	[HideBackground]      =       { { .i = 0 },     },
@@ -130,39 +130,44 @@ static SiteSpecific certs[] = {
  * If you use anything else but MODKEY and GDK_SHIFT_MASK, don't forget to
  * edit the CLEANMASK() macro.
  */
+void pass() {}
 static Key keys[] = {
 	/* modifier              keyval          function    arg */
-	{ MODKEY,                GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
-	{ MODKEY,                GDK_KEY_slash,  spawn,      SETPROP("_SURF_FIND", "_SURF_FIND", PROMPT_FIND) },
+	{ 0,                     GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
+	{ 0,                     GDK_KEY_slash,  spawn,      SETPROP("_SURF_FIND", "_SURF_FIND", PROMPT_FIND) },
+
+	{ 0,                     GDK_KEY_i,      insert,     { .i = 1 } },
+	{ 0,                     GDK_KEY_Escape, insert,     { .i = 0 } },
 
 	{ 0,                     GDK_KEY_Escape, stop,       { 0 } },
-	{ MODKEY,                GDK_KEY_c,      stop,       { 0 } },
+	{ 0,                     GDK_KEY_c,      stop,       { 0 } },
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_r,      reload,     { .i = 1 } },
-	{ MODKEY,                GDK_KEY_r,      reload,     { .i = 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_r,      reload,     { .i = 1 } },
+	{ 0,                     GDK_KEY_r,      reload,     { .i = 0 } },
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_l,      navigate,   { .i = +1 } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_h,      navigate,   { .i = -1 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_l,      navigate,   { .i = +1 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_h,      navigate,   { .i = -1 } },
 
 	/* vertical and horizontal scrolling, in viewport percentage */
-	{ MODKEY,                GDK_KEY_j,      scrollv,    { .i = +10 } },
-	{ MODKEY,                GDK_KEY_k,      scrollv,    { .i = -10 } },
-	{ MODKEY,                GDK_KEY_d,      scrollv,    { .i = +50 } },
-	{ MODKEY,                GDK_KEY_u,      scrollv,    { .i = -50 } },
-	{ MODKEY,                GDK_KEY_l,      scrollh,    { .i = +10 } },
-	{ MODKEY,                GDK_KEY_h,      scrollh,    { .i = -10 } },
+	{ 0,                     GDK_KEY_j,      scrollv,    { .i = +10 } },
+	{ 0,                     GDK_KEY_k,      scrollv,    { .i = -10 } },
+	{ 0,                     GDK_KEY_d,      scrollv,    { .i = +50 } },
+	{ 0,                     GDK_KEY_u,      scrollv,    { .i = -50 } },
+	{ 0,                     GDK_KEY_l,      scrollh,    { .i = +10 } },
+	{ 0,                     GDK_KEY_h,      scrollh,    { .i = -10 } },
 
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_j,      zoom,       { .i = -1 } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_k,      zoom,       { .i = +1 } },
-	{ MODKEY,                GDK_KEY_minus,  zoom,       { .i = -1 } },
-	{ MODKEY,                GDK_KEY_plus,   zoom,       { .i = +1 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_j,      zoom,       { .i = -1 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_k,      zoom,       { .i = +1 } },
+	{ 0,                     GDK_KEY_minus,  zoom,       { .i = -1 } },
+	{ 0,                     GDK_KEY_plus,   zoom,       { .i = +1 } },
 
-	{ MODKEY,                GDK_KEY_p,      clipboard,  { .i = 1 } },
-	{ MODKEY,                GDK_KEY_y,      clipboard,  { .i = 0 } },
+	{ 0,                     GDK_KEY_p,      clipboard,  { .i = 1 } },
+	{ 0,                     GDK_KEY_y,      clipboard,  { .i = 0 } },
 
-	{ MODKEY,                GDK_KEY_n,      find,       { .i = +1 } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_n,      find,       { .i = -1 } },
+
+	{ 0,                     GDK_KEY_n,      find,       { .i = +1 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_n,      find,       { .i = -1 } },
 
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_p,      print,      { 0 } },
 	{ MODKEY,                GDK_KEY_t,      showcert,   { 0 } },
@@ -179,6 +184,43 @@ static Key keys[] = {
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      toggle,     { .i = ScrollBars } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_t,      toggle,     { .i = StrictTLS } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_m,      toggle,     { .i = Style } },
+
+	// the modal patch makes it so that no keys that are used in a mapping (without MODKEY)
+	// can be typed while in 'normal' mode. so we add all of these mappings for unused keys
+	// to a pass(), which does nothing, so that they're not accidentally typed while in normal
+	// mode
+	{ 0,                     GDK_KEY_a,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_b,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_e,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_f,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_g,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_m,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_q,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_s,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_t,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_v,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_w,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_a,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_b,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_c,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_d,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_e,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_f,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_g,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_i,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_m,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_o,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_p,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_q,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_s,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_t,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_u,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_v,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_w,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_x,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_y,      pass,       { 0 } },
+	{ 0|GDK_SHIFT_MASK,      GDK_KEY_z,      pass,       { 0 } },
+
 };
 
 /* button definitions */
