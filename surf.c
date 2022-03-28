@@ -243,7 +243,7 @@ static void clicknewwindow(Client *c, const Arg *a, WebKitHitTestResult *h);
 static void clickexternplayer(Client *c, const Arg *a, WebKitHitTestResult *h);
 
 static char winid[64];
-static char togglestats[11];
+static char togglestats[12];
 static char pagestats[2];
 static Atom atoms[AtomLast];
 static Window embed;
@@ -670,16 +670,18 @@ updatetitle(Client *c)
 void
 gettogglestats(Client *c)
 {
-	togglestats[0] = cookiepolicy_set(cookiepolicy_get());
-	togglestats[1] = curconfig[CaretBrowsing].val.i ?   'C' : 'c';
-	togglestats[2] = curconfig[Geolocation].val.i ?     'G' : 'g';
-	togglestats[3] = curconfig[DiskCache].val.i ?       'D' : 'd';
-	togglestats[4] = curconfig[LoadImages].val.i ?      'I' : 'i';
-	togglestats[5] = curconfig[JavaScript].val.i ?      'S' : 's';
-	togglestats[6] = curconfig[Style].val.i ?           'M' : 'm';
-	togglestats[7] = curconfig[FrameFlattening].val.i ? 'F' : 'f';
-	togglestats[8] = curconfig[Certificate].val.i ?     'X' : 'x';
-	togglestats[9] = curconfig[StrictTLS].val.i ?       'T' : 't';
+	togglestats[0]  = insertmode ?                          'I' : 'N';
+	togglestats[1]  =                                       ' ';
+	togglestats[2]  = cookiepolicy_set(cookiepolicy_get());
+	togglestats[3]  = curconfig[CaretBrowsing].val.i ?      'C' : 'c';
+	togglestats[4]  = curconfig[Geolocation].val.i ?        'G' : 'g';
+	togglestats[5]  = curconfig[DiskCache].val.i ?          'D' : 'd';
+	togglestats[6]  = curconfig[LoadImages].val.i ?         'B' : 'b';
+	togglestats[7]  = curconfig[JavaScript].val.i ?         'S' : 's';
+	togglestats[8]  = curconfig[Style].val.i ?              'M' : 'm';
+	togglestats[9]  = curconfig[FrameFlattening].val.i ?    'F' : 'f';
+	togglestats[10] = curconfig[Certificate].val.i ?        'X' : 'x';
+	togglestats[11] = curconfig[StrictTLS].val.i ?          'T' : 't';
 }
 
 void
@@ -1980,7 +1982,9 @@ find(Client *c, const Arg *a)
 void
 insert(Client *c, const Arg *a)
 {
-		insertmode = (a->i);
+	bool changed = insertmode != a->i;
+	insertmode = (a->i);
+	if (changed) updatetitle(c);
 }
 
 void
