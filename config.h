@@ -27,10 +27,10 @@ static Parameter defconfig[ParameterLast] = {
 	[FileURLsCrossAccess] =       { { .i = 0 },     },
 	[FontSize]            =       { { .i = 16 },    },
 	[FrameFlattening]     =       { { .i = 0 },     },
-	[Geolocation]         =       { { .i = 0 },     },
+	[Geolocation]         =       { { .i = 1 },     },
 	[HideBackground]      =       { { .i = 0 },     },
 	[Inspector]           =       { { .i = 0 },     },
-	[Java]                =       { { .i = 1 },     },
+	[Java]                =       { { .i = 0 },     },
 	[JavaScript]          =       { { .i = 1 },     },
 	[KioskMode]           =       { { .i = 0 },     },
 	[LoadImages]          =       { { .i = 1 },     },
@@ -44,7 +44,7 @@ static Parameter defconfig[ParameterLast] = {
 	[SpellChecking]       =       { { .i = 0 },     },
 	[SpellLanguages]      =       { { .v = ((char *[]){ "en_US", NULL }) }, },
 	[StrictTLS]           =       { { .i = 1 },     },
-	[Style]               =       { { .i = 1 },     },
+	[Style]               =       { { .i = 0 },     },
 	[WebGL]               =       { { .i = 0 },     },
 	[ZoomLevel]           =       { { .f = 1.0 },   },
 };
@@ -79,8 +79,8 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 /* DOWNLOAD(URI, referer) */
 #define DOWNLOAD(u, r) { \
         .v = (const char *[]){ "st", "-e", "/bin/sh", "-c",\
-             "curl -g -L -J -O -A \"$1\" -b \"$2\" -c \"$2\"" \
-             " -e \"$3\" \"$4\"; read", \
+             "curl -g -L -J --output-dir ${XDG_DOWNLOAD_DIR:-$HOME/downloads}/surf -O" \
+             " -A \"$1\" -b \"$2\" -c \"$2\" -e \"$3\" \"$4\"; read", \
              "surf-download", useragent, cookiefile, r, u, NULL \
         } \
 }
@@ -100,6 +100,13 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
         .v = (const char *[]){ "/bin/sh", "-c", \
              "mpv --really-quiet \"$0\"", u, NULL \
         } \
+}
+
+#define WATCH { \
+    .v = (char *[]){ "/bin/sh", "-c", \
+    	"st -e \
+    	yt $(xprop -id $0 _SURF_URI | cut -d \\\" -f 2)", \
+	winid, NULL } \
 }
 
 /* styles */
@@ -131,6 +138,8 @@ static SiteSpecific certs[] = {
  * edit the CLEANMASK() macro.
  */
 void pass() {}
+#define HOME "https://xzx.ro"
+static char *searchengine = "https://xzx.ro/?q=";
 static Key keys[] = {
 	/* modifier              keyval          function    arg */
 	{ 0,                     GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
@@ -156,14 +165,18 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_l,      scrollh,    { .i = +10 } },
 	{ 0,                     GDK_KEY_h,      scrollh,    { .i = -10 } },
 
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      loaduri,   { .v = HOME } },
+
+    { MODKEY|GDK_SHIFT_MASK, GDK_KEY_v,      spawn,      WATCH },
+
 
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_j,      zoom,       { .i = -1 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_k,      zoom,       { .i = +1 } },
 	{ 0,                     GDK_KEY_minus,  zoom,       { .i = -1 } },
 	{ 0,                     GDK_KEY_plus,   zoom,       { .i = +1 } },
 
-	{ 0,                     GDK_KEY_p,      clipboard,  { .i = 1 } },
-	{ 0,                     GDK_KEY_y,      clipboard,  { .i = 0 } },
+	{ MODKEY,                GDK_KEY_p,      clipboard,  { .i = 1 } },
+	{ MODKEY,                GDK_KEY_y,      clipboard,  { .i = 0 } },
 
 
 	{ 0,                     GDK_KEY_n,      find,       { .i = +1 } },
@@ -176,14 +189,14 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_F11,    togglefullscreen, { 0 } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_o,      toggleinspector, { 0 } },
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_c,      toggle,     { .i = CaretBrowsing } },
+	// { MODKEY|GDK_SHIFT_MASK, GDK_KEY_c,      toggle,     { .i = CaretBrowsing } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_f,      toggle,     { .i = FrameFlattening } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_g,      toggle,     { .i = Geolocation } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_s,      toggle,     { .i = JavaScript } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_i,      toggle,     { .i = LoadImages } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      toggle,     { .i = ScrollBars } },
+	// { MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      toggle,     { .i = ScrollBars } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_t,      toggle,     { .i = StrictTLS } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_m,      toggle,     { .i = Style } },
+	{ MODKEY,                GDK_KEY_m,      toggle,     { .i = Style } },
 
 	// the modal patch makes it so that no keys that are used in a mapping (without MODKEY)
 	// can be typed while in 'normal' mode. so we add all of these mappings for unused keys
@@ -192,20 +205,21 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_a,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_b,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_e,      pass,       { 0 } },
-	{ 0,                     GDK_KEY_f,      pass,       { 0 } },
+	// { 0,                     GDK_KEY_f,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_g,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_m,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_p,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_q,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_s,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_t,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_v,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_w,      pass,       { 0 } },
+	{ 0,                     GDK_KEY_y,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_a,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_b,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_c,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_d,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_e,      pass,       { 0 } },
-	{ 0|GDK_SHIFT_MASK,      GDK_KEY_f,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_g,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_i,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_m,      pass,       { 0 } },
