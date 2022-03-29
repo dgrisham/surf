@@ -138,8 +138,8 @@ static SiteSpecific certs[] = {
  * edit the CLEANMASK() macro.
  */
 void pass() {}
-#define HOME "https://xzx.ro"
-static char *searchengine = "https://xzx.ro/?q=";
+#define HOME "https://search.bus-hit.me"
+static char *searchengine = "https://search.bus-hit.me/?q=";
 static Key keys[] = {
 	/* modifier              keyval          function    arg */
 	{ 0,                     GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
