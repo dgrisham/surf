@@ -78,6 +78,16 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
         } \
 }
 
+#define SELNAV { \
+	.v = (char *[]){ "/bin/sh", "-c", \
+		"prop=\"`xprop -id $1 _SURF_HIST" \
+		" | sed -e 's/^.[^\"]*\"//' -e 's/\"$//' -e 's/\\\\\\n/\\n/g'" \
+		" | dmenu -i -l 10`\"" \
+		" && xprop -id $1 -f _SURF_NAV 8u -set _SURF_NAV \"${prop%%:*}\"", \
+		"surf-setprop", winid, NULL \
+	} \
+}
+
 /* DOWNLOAD(URI, referer) */
 #define DOWNLOAD(u, r) { \
         .v = (const char *[]){ "st", "-e", "/bin/sh", "-c",\
@@ -157,7 +167,6 @@ static Key keys[] = {
 	/* modifier              keyval          function    arg */
 	{ 0,                     GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
 	{ 0,                     GDK_KEY_slash,  spawn,      SETPROP("_SURF_FIND", "_SURF_FIND", PROMPT_FIND) },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_m,      spawn,      BOOKMARK_ADD("_SURF_URI") },
 
 	{ 0,                     GDK_KEY_i,      insert,     { .i = 1 } },
 	{ 0,                     GDK_KEY_Escape, insert,     { .i = 0 } },
@@ -179,7 +188,9 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_l,      scrollh,    { .i = +10 } },
 	{ 0,                     GDK_KEY_h,      scrollh,    { .i = -10 } },
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      loaduri,   { .v = HOME } },
+	// { MODKEY,                GDK_KEY_b,      loaduri,   { .v = HOME } },
+	{ MODKEY,                GDK_KEY_b,      selhist,    SELNAV },
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      spawn,      BOOKMARK_ADD("_SURF_URI") },
 
     { MODKEY|GDK_SHIFT_MASK, GDK_KEY_v,      spawn,      WATCH },
 
