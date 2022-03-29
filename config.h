@@ -192,6 +192,8 @@ static Key keys[] = {
 	{ MODKEY,                GDK_KEY_b,      selhist,    SELNAV },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      spawn,      BOOKMARK_ADD("_SURF_URI") },
 
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_d,      download_current_uri,      { 0 } },
+
     { MODKEY|GDK_SHIFT_MASK, GDK_KEY_v,      spawn,      WATCH },
 
 

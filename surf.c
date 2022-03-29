@@ -213,6 +213,7 @@ static void downloadstarted(WebKitWebContext *wc, WebKitDownload *d,
                             Client *c);
 static void responsereceived(WebKitDownload *d, GParamSpec *ps, Client *c);
 static void download(Client *c, WebKitURIResponse *r);
+static void download_current_uri(Client *c);
 static void webprocessterminated(WebKitWebView *v,
                                  WebKitWebProcessTerminationReason r,
                                  Client *c);
@@ -1769,6 +1770,14 @@ void
 download(Client *c, WebKitURIResponse *r)
 {
 	Arg a = (Arg)DOWNLOAD(webkit_uri_response_get_uri(r), geturi(c));
+	spawn(c, &a);
+}
+
+void
+download_current_uri(Client *c)
+{
+    const char* uri = geturi(c);
+	Arg a = (Arg)DOWNLOAD(uri, uri);
 	spawn(c, &a);
 }
 
