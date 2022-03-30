@@ -56,8 +56,8 @@ function setHintRules() {
 	    document.head.appendChild(style);
 	}
 	var ss = document.styleSheets[0];
-	ss.insertRule('a[highlight=hint_elem] {background-color: yellow}', 0);
-	ss.insertRule('a[highlight=hint_active] {background-color: lime}', 0);
+	// ss.insertRule('a[highlight=hint_elem] {background-color: yellow}', 0);
+	ss.insertRule('a[highlight=hint_active] {background-color: yellow}', 0);
 }
 
 function deleteHintRules() {
@@ -116,7 +116,7 @@ function setHints() {
 		var elem_bottom = win_top + pos.bottom;
 		var elem_left = win_left + pos.left;
 		var elem_right = win_left + pos.left;
-		if ( elem_bottom >= win_top && elem_top <= win_bottom) {
+		if (elem_bottom >= win_top && elem_top <= win_bottom) {
 			hint_elems.push(elem);
 			setHighlight(elem, false);
 			var span = document.createElement('span');
@@ -125,12 +125,12 @@ function setHints() {
 				'top: ', elem_top, 'px;',
 				'position: absolute;',
 				'font-size: 13px;',
-				'background-color: ' + (hint_open_in_new_tab ? '#ff6600' : 'red') + ';',
-				'color: white;',
+				'background-color: ' + (hint_open_in_new_tab ? '#ff6600' : '#000000') + ';',
+				'color: yellow;',
 				'font-weight: bold;',
 				'padding: 0px 1px;',
 				'z-index: 100000;'
-					].join('');
+			].join('');
 			span.innerHTML = hint_elems.length;
 			div.appendChild(span);
 			if (elem.tagName.toLowerCase() == 'a') {
