@@ -66,16 +66,13 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 #define PROMPT_GO   "Go:"
 #define PROMPT_FIND "Find:"
 
-#define DMENU_CMD "dmenu -fn 'Inconsolata Nerd Font Mono:pixelsize=16:antialias=true' -nb '#000000' -nf '#ffffff' -sb '#ffffff' -sf '#000000'"
-
-
 /* SETPROP(readprop, setprop, prompt)*/
 #define SETPROP(r, s, p) { \
         .v = (const char *[]){ "/bin/sh", "-c", \
              "prop=\"$(printf '%b' \"$(xprop -id $1 "r" " \
              "| sed -e 's/^"r"(UTF8_STRING) = \"\\(.*\\)\"/\\1/' " \
              "      -e 's/\\\\\\(.\\)/\\1/g' && cat "BOOKMARKFILE")\" " \
-             "| "DMENU_CMD" -p '"p"' -w $1)\" && " \
+             "| dmenu -p '"p"' -w $1)\" && " \
              "xprop -id $1 -f "s" 8u -set "s" \"$prop\"", \
              "surf-setprop", winid, NULL \
         } \
@@ -85,7 +82,7 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 	.v = (char *[]){ "/bin/sh", "-c", \
 		"prop=\"`xprop -id $1 _SURF_HIST" \
 		" | sed -e 's/^.[^\"]*\"//' -e 's/\"$//' -e 's/\\\\\\n/\\n/g'" \
-		" | "DMENU_CMD" -i -l 10`\"" \
+		" | dmenu -i -l 10`\"" \
 		" && xprop -id $1 -f _SURF_NAV 8u -set _SURF_NAV \"${prop%%:*}\"", \
 		"surf-setprop", winid, NULL \
 	} \
