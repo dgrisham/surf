@@ -40,12 +40,12 @@ function hintHandler(e) {
 
 function setHighlight(elem, is_active) {
 	if (is_active) {
-		var active_elem = document.body.querySelector('a[highlight=hint_active]');
+		var active_elem = document.body.querySelector('a[findlink-highlight=hint_active]');
 		if (active_elem != undefined)
-			active_elem.setAttribute('highlight', 'hint_elem');
-		elem.setAttribute('highlight', 'hint_active');
+			active_elem.setAttribute('findlink-highlight', 'hint_elem');
+		elem.setAttribute('findlink-highlight', 'hint_active');
 	} else {
-		elem.setAttribute('highlight', 'hint_elem');
+		elem.setAttribute('findlink-highlight', 'hint_elem');
 	}
 }
 
@@ -56,8 +56,8 @@ function setHintRules() {
 	    document.head.appendChild(style);
 	}
 	var ss = document.styleSheets[0];
-	// ss.insertRule('a[highlight=hint_elem] {background-color: yellow}', 0);
-	ss.insertRule('a[highlight=hint_active] {background-color: yellow}', 0);
+	// ss.insertRule('a[findlink-highlight=hint_elem] {background-color: yellow}', 0);
+	ss.insertRule('a[findlink-highlight=hint_active] {background-color: yellow}', 0);
 }
 
 function deleteHintRules() {
@@ -105,7 +105,7 @@ function setHints() {
 	// TODO: <area>
 	var elems = document.body.querySelectorAll('a, input:not([type=hidden]), textarea, select, button');
 	var div = document.createElement('div');
-	div.setAttribute('highlight', 'hints');
+	div.setAttribute('findlink-highlight', 'hints');
 	document.body.appendChild(div);
 	for (var i = 0; i < elems.length; i++) {
 		var elem = elems[i];
@@ -153,16 +153,14 @@ function isHintDisplay(elem) {
 window.addEventListener('pagehide', removeHints, false);
 window.addEventListener('pageshow', removeHints, false);
 function removeHints() {
-	if (!hint_enabled)
-		return;
 	hint_enabled = false;
-	deleteHintRules();
+	if (hint_enabled) deleteHintRules();
 	for (var i = 0; i < hint_elems.length; i++) {
-		hint_elems[i].removeAttribute('highlight');
+		hint_elems[i].removeAttribute('findlink-highlight');
 	}
 	hint_elems = [];
 	hint_num_str = '';
-	var div = document.body.querySelector('div[highlight=hints]');
+	var div = document.body.querySelector('div[findlink-highlight=hints]');
 	if (div != undefined) {
 		document.body.removeChild(div);
 	}
