@@ -121,7 +121,7 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 	winid, NULL } \
 }
 
-/* BOOKMARK_ADD(readprop) */
+/* BOOKMARK_ADD(r) */
 #define BOOKMARK_ADD(r) {\
         .v = (const char *[]){ "/bin/sh", "-c", \
              "(echo $(xprop -id $0 $1) | cut -d '\"' -f2 " \
@@ -129,6 +129,23 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
              "| awk '!seen[$0]++' > "BOOKMARKFILE".tmp && " \
              "mv "BOOKMARKFILE".tmp "BOOKMARKFILE, \
              winid, r, NULL \
+        } \
+}
+
+/* BOOKMARK_REMOVE_DMENU */
+#define BOOKMARK_REMOVE_DMENU { \
+        .v = (const char *[]){ "/bin/sh", "-c", \
+             "line=\"$(cat "BOOKMARKFILE" | dmenu -n -p 'Delete bookmark:' -w $0)\"" \
+             "&& sed -i ${line}d "BOOKMARKFILE, winid, NULL \
+        } \
+}
+
+/* BOOKMARK_REMOVE_URI(r) */
+#define BOOKMARK_REMOVE_URI(r) { \
+        .v = (const char *[]){ "/bin/bash", "-c", \
+        	"choice=\"$(echo 'n\ny' | dmenu -p 'Remove current uri from bookmarks? [yN]:' -w $0)\"; [[ \"$choice\" =~ [yY] ]]" \
+        	" && uri=\"$(xprop -id $0 $1 | cut -d \\\" -f 2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\" " \
+            " && sed -i \"\\|$uri|d\" "BOOKMARKFILE, winid, r, NULL \
         } \
 }
 
@@ -191,8 +208,10 @@ static Key keys[] = {
 	// { MODKEY,                GDK_KEY_b,      loaduri,   { .v = HOME } },
 	{ MODKEY,                GDK_KEY_b,      selhist,    SELNAV },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      spawn,      BOOKMARK_ADD("_SURF_URI") },
+	{ MODKEY,                GDK_KEY_d,      spawn,      BOOKMARK_REMOVE_DMENU },
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_d,      spawn,      BOOKMARK_REMOVE_URI("_SURF_URI") },
 
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_d,      download_current_uri,      { 0 } },
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_u,      download_current_uri, { 0 } },
 
     { MODKEY|GDK_SHIFT_MASK, GDK_KEY_v,      spawn,      WATCH },
 
@@ -217,7 +236,7 @@ static Key keys[] = {
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_o,      toggleinspector, { 0 } },
 
 	// { MODKEY|GDK_SHIFT_MASK, GDK_KEY_c,      toggle,     { .i = CaretBrowsing } },
-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_f,      toggle,     { .i = FrameFlattening } },
+	// { MODKEY|GDK_SHIFT_MASK, GDK_KEY_f,      toggle,     { .i = FrameFlattening } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_g,      toggle,     { .i = Geolocation } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_s,      toggle,     { .i = JavaScript } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_i,      toggle,     { .i = LoadImages } },
@@ -256,7 +275,7 @@ static Key keys[] = {
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_q,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_s,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_t,      pass,       { 0 } },
-	{ 0|GDK_SHIFT_MASK,      GDK_KEY_u,      pass,       { 0 } },
+	// { 0|GDK_SHIFT_MASK,      GDK_KEY_u,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_v,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_w,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_x,      pass,       { 0 } },
