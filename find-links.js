@@ -4,11 +4,7 @@ var hint_open_in_new_tab = false;
 var hint_enabled = false;
 function hintMode(newtab){
 	hint_enabled = true;
-	if (newtab) {
-		hint_open_in_new_tab = true;
-	} else {
-		hint_open_in_new_tab = false;
-	}
+	hint_open_in_new_tab = new_tab;
 	setHints();
 	document.removeEventListener('keydown', initKeyBind, false);
 	document.addEventListener('keydown', hintHandler, false);
@@ -62,8 +58,13 @@ function setHintRules() {
 
 function deleteHintRules() {
 	var ss = document.styleSheets[0];
-	ss.deleteRule(0);
-	ss.deleteRule(0);
+    if (ss.cssRules) {
+        for (var i = 0; i < ss.cssRules.length; i++) {
+            if (ss.cssRules[i].selectorText === 'a[findlink-highlight="hint_active"]') {
+                ss.deleteRule(i);
+            }
+        }
+    }
 }
 
 function judgeHintNum(hint_num) {
@@ -84,7 +85,7 @@ function execSelect(elem) {
 		// TODO: ajax, <select>
 		if (hint_open_in_new_tab)
 			window.open(elem.href);
-		else location.href=elem.href;
+		else location.href = elem.href;
 	} else if (tag_name == 'input' && (type == "submit" || type == "button" || type == "reset")) {
 		elem.click();
 	} else if (tag_name == 'input' && (type == "radio" || type == "checkbox")) {
@@ -154,7 +155,7 @@ window.addEventListener('pagehide', removeHints, false);
 window.addEventListener('pageshow', removeHints, false);
 function removeHints() {
 	hint_enabled = false;
-	if (hint_enabled) deleteHintRules();
+	deleteHintRules();
 	for (var i = 0; i < hint_elems.length; i++) {
 		hint_elems[i].removeAttribute('findlink-highlight');
 	}
@@ -180,7 +181,7 @@ document.addEventListener('keydown', initKeyBind, false);
 function initKeyBind(e) {
 	var t = e.target;
 	if (t.nodeType == 1) {
-		addKeyBind( 'M-f', () => hintMode(), e );
+		addKeyBind( 'M-f', () => hintMode(false), e );
 		addKeyBind( 'M-F', () => hintMode(true), e );
 		// addKeyBind( '`', () => removeHints(), e );
 	}
