@@ -4,7 +4,7 @@ var hint_open_in_new_tab = false;
 var hint_enabled = false;
 function hintMode(newtab){
 	hint_enabled = true;
-	hint_open_in_new_tab = new_tab;
+	hint_open_in_new_tab = newtab;
 	setHints();
 	document.removeEventListener('keydown', initKeyBind, false);
 	document.addEventListener('keydown', hintHandler, false);

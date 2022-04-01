@@ -37,7 +37,7 @@
 #define LENGTH(x)               (sizeof(x) / sizeof(x[0]))
 #define CLEANMASK(mask)         (mask & (MODKEY|GDK_SHIFT_MASK))
 
-enum { AtomFind, AtomGo, AtomUri, AtomUTF8, AtomHist, AtomNav, AtomLast };
+enum { AtomFind, AtomGo, AtomUri, AtomUTF8, AtomLast };
 
 enum {
 	OnDoc   = WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT,
@@ -230,8 +230,6 @@ static void zoom(Client *c, const Arg *a);
 static void scrollv(Client *c, const Arg *a);
 static void scrollh(Client *c, const Arg *a);
 static void navigate(Client *c, const Arg *a);
-static void selhist(Client *c, const Arg *arg);
-static void navhist(Client *c, const Arg *arg);
 static void stop(Client *c, const Arg *a);
 static void toggle(Client *c, const Arg *a);
 static void togglefullscreen(Client *c, const Arg *a);
@@ -246,7 +244,7 @@ static void clicknewwindow(Client *c, const Arg *a, WebKitHitTestResult *h);
 static void clickexternplayer(Client *c, const Arg *a, WebKitHitTestResult *h);
 
 static char winid[64];
-static char togglestats[12];
+static char togglestats[13];
 static char pagestats[2];
 static Atom atoms[AtomLast];
 static Window embed;
@@ -347,8 +345,6 @@ setup(void)
 	atoms[AtomGo]   = XInternAtom(dpy, "_SURF_GO",    False);
 	atoms[AtomUri]  = XInternAtom(dpy, "_SURF_URI",   False);
 	atoms[AtomUTF8] = XInternAtom(dpy, "UTF8_STRING", False);
-	atoms[AtomHist] = XInternAtom(dpy, "_SURF_HIST",  False);
-	atoms[AtomNav]  = XInternAtom(dpy, "_SURF_NAV",   False);
 
 	gtk_init(NULL, NULL);
 
@@ -678,15 +674,16 @@ gettogglestats(Client *c)
 	togglestats[0]  = insertmode ?                          'I' : 'N';
 	togglestats[1]  =                                       ' ';
 	togglestats[2]  = cookiepolicy_set(cookiepolicy_get());
-	togglestats[3]  = curconfig[CaretBrowsing].val.i ?      'C' : 'c';
-	togglestats[4]  = curconfig[Geolocation].val.i ?        'G' : 'g';
-	togglestats[5]  = curconfig[DiskCache].val.i ?          'D' : 'd';
-	togglestats[6]  = curconfig[LoadImages].val.i ?         'B' : 'b';
-	togglestats[7]  = curconfig[JavaScript].val.i ?         'S' : 's';
-	togglestats[8]  = curconfig[Style].val.i ?              'M' : 'm';
-	togglestats[9]  = curconfig[FrameFlattening].val.i ?    'F' : 'f';
-	togglestats[10] = curconfig[Certificate].val.i ?        'X' : 'x';
-	togglestats[11] = curconfig[StrictTLS].val.i ?          'T' : 't';
+	togglestats[3]  = save_history ?                        'H' : 'h';
+	togglestats[4]  = curconfig[CaretBrowsing].val.i ?      'C' : 'c';
+	togglestats[5]  = curconfig[Geolocation].val.i ?        'G' : 'g';
+	togglestats[6]  = curconfig[DiskCache].val.i ?          'D' : 'd';
+	togglestats[7]  = curconfig[LoadImages].val.i ?         'B' : 'b';
+	togglestats[8]  = curconfig[JavaScript].val.i ?         'S' : 's';
+	togglestats[9]  = curconfig[Style].val.i ?              'M' : 'm';
+	togglestats[10] = curconfig[FrameFlattening].val.i ?    'F' : 'f';
+	togglestats[11] = curconfig[Certificate].val.i ?        'X' : 'x';
+	togglestats[12] = curconfig[StrictTLS].val.i ?          'T' : 't';
 }
 
 void
@@ -1337,9 +1334,6 @@ processx(GdkXEvent *e, GdkEvent *event, gpointer d)
 				a.v = getatom(c, AtomGo);
 				loaduri(c, &a);
 				return GDK_FILTER_REMOVE;
-			} else if(ev->atom == atoms[AtomNav]) {
-				a.v = getatom(c, AtomNav);
-				navhist(c, &a);
 			}
 		}
 	}
@@ -1432,7 +1426,6 @@ showview(WebKitWebView *v, Client *c)
 
 	setatom(c, AtomFind, "");
 	setatom(c, AtomUri, "about:blank");
-	setatom(c, AtomHist, "");
 }
 
 GtkWidget *
@@ -1547,6 +1540,10 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
 		seturiparameters(c, uri, loadcommitted);
 		c->https = webkit_web_view_get_tls_info(c->view, &c->cert,
 		                                        &c->tlserr);
+    	if (save_history) {
+        	Arg a = (Arg)HISTORY_ADD(uri);
+        	spawn(c, &a);
+    	}
 		break;
 	case WEBKIT_LOAD_FINISHED:
 		seturiparameters(c, uri, loadfinished);
@@ -1925,77 +1922,6 @@ navigate(Client *c, const Arg *a)
 		webkit_web_view_go_back(c->view);
 	else if (a->i > 0)
 		webkit_web_view_go_forward(c->view);
-}
-
-static void
-selhist(Client *c, const Arg *arg) {
-	WebKitBackForwardList *lst;
-	WebKitBackForwardListItem *cur;
-	gint i;
-	gchar *out;
-	gchar *tmp;
-	gchar *line;
-
-	out = g_strdup("");
-
-	if(!(lst = webkit_web_view_get_back_forward_list(c->view)))
-		return;
-
-	for(i = webkit_back_forward_list_get_length(lst); i > 0; i--) {
-		if(!(cur = webkit_back_forward_list_get_nth_item(lst, -i)))
-			continue;
-		line = g_strdup_printf("%d: %s (%s)\n", -i,
-            webkit_back_forward_list_item_get_title(cur),
-    		webkit_back_forward_list_item_get_original_uri(cur)
-		);
-		tmp = g_strconcat(out, line, NULL);
-		g_free(out);
-		out = tmp;
-	}
-
-	if((cur = webkit_back_forward_list_get_nth_item(lst, 0))) {
-		line = g_strdup_printf("%d: %s (%s)\n", 0,
-            webkit_back_forward_list_item_get_title(cur),
-    		webkit_back_forward_list_item_get_original_uri(cur)
-		);
-		tmp = g_strconcat(out, line, NULL);
-		g_free(out);
-		out = tmp;
-	}
-
-	for(i = 1; i <= webkit_back_forward_list_get_length(lst); i++) {
-		if(!(cur = webkit_back_forward_list_get_nth_item(lst, i)))
-			break;
-		line = g_strdup_printf("%d: %s (%s)\n", i,
-            webkit_back_forward_list_item_get_title(cur),
-    		webkit_back_forward_list_item_get_original_uri(cur)
-		);
-		tmp = g_strconcat(out, line, NULL);
-		g_free(out);
-		out = tmp;
-	}
-
-	setatom(c, AtomHist, out);
-	g_free(out);
-	spawn(c, arg);
-}
-
-static void
-navhist(Client *c, const Arg *arg) {
-	int i = atoi(arg->v);
-
-	WebKitBackForwardList *lst;
-	WebKitBackForwardListItem *cur;
-	gchar *uri;
-
-	if(!(lst = webkit_web_view_get_back_forward_list(c->view)))
-		return;
-
-	if((cur = webkit_back_forward_list_get_nth_item(lst, i))) {
-    	Arg a;
-		a.v = webkit_back_forward_list_item_get_original_uri(cur);
-    	loaduri(c, &a);
-	}
 }
 
 void

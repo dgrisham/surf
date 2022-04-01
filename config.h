@@ -8,6 +8,9 @@ static char *cachedir       = "~/.surf/cache/";
 static char *cookiefile     = "~/.surf/cookies.txt";
 
 #define BOOKMARKFILE "~/.surf/bookmarks"
+#define HISTORYFILE  "~/.surf/history"
+
+bool save_history = true;
 
 /* Webkit default features */
 /* Highest priority value will be used.
@@ -67,25 +70,27 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 #define PROMPT_FIND "Find:"
 
 /* SETPROP(readprop, setprop, prompt)*/
-#define SETPROP(r, s, p) { \
+#define SETPROP_OPEN_URI(r, s, p) { \
         .v = (const char *[]){ "/bin/sh", "-c", \
              "prop=\"$(printf '%b' \"$(xprop -id $1 "r" " \
              "| sed -e 's/^"r"(UTF8_STRING) = \"\\(.*\\)\"/\\1/' " \
              "      -e 's/\\\\\\(.\\)/\\1/g' && cat "BOOKMARKFILE")\" " \
-             "| dmenu -p '"p"' -w $1)\" && " \
+             "| dmenu -l 5 -p '"p"' -w $1)\" && " \
              "xprop -id $1 -f "s" 8u -set "s" \"$prop\"", \
              "surf-setprop", winid, NULL \
         } \
 }
 
-#define SELNAV { \
-	.v = (char *[]){ "/bin/sh", "-c", \
-		"prop=\"`xprop -id $1 _SURF_HIST" \
-		" | sed -e 's/^.[^\"]*\"//' -e 's/\"$//' -e 's/\\\\\\n/\\n/g'" \
-		" | dmenu -i -l 10`\"" \
-		" && xprop -id $1 -f _SURF_NAV 8u -set _SURF_NAV \"${prop%%:*}\"", \
-		"surf-setprop", winid, NULL \
-	} \
+/* SETPROP(readprop, setprop, prompt)*/
+#define SETPROP(r, s, p) { \
+        .v = (const char *[]){ "/bin/sh", "-c", \
+             "prop=\"$(printf '%b' \"$(xprop -id $1 "r" " \
+             "| sed -e 's/^"r"(UTF8_STRING) = \"\\(.*\\)\"/\\1/' " \
+             "      -e 's/\\\\\\(.\\)/\\1/g')\" " \
+             "| dmenu -u -p '"p"' -w $1)\" && " \
+             "xprop -id $1 -f "s" 8u -set "s" \"$prop\"", \
+             "surf-setprop", winid, NULL \
+        } \
 }
 
 /* DOWNLOAD(URI, referer) */
@@ -124,19 +129,41 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 /* BOOKMARK_ADD(r) */
 #define BOOKMARK_ADD(r) {\
         .v = (const char *[]){ "/bin/sh", "-c", \
-             "(echo $(xprop -id $0 $1) | cut -d '\"' -f2 " \
-             "| sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//' && cat "BOOKMARKFILE") " \
-             "| awk '!seen[$0]++' > "BOOKMARKFILE".tmp && " \
-             "mv "BOOKMARKFILE".tmp "BOOKMARKFILE, \
+             "uri=\"$(echo $(xprop -id $0 $1) | cut -d '\"' -f2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\"" \
+        	 " && choice=\"$(echo 'y\nn' | dmenu -p \"Add $uri to bookmarks? [yN]:\" -w $0)\"; [[ \"$choice\" =~ [yY] ]]" \
+             " && (echo \"$uri\" && cat "BOOKMARKFILE") | awk '!seen[$0]++' > "BOOKMARKFILE".tmp" \
+             " && mv "BOOKMARKFILE".tmp "BOOKMARKFILE, \
              winid, r, NULL \
+        } \
+}
+
+/* HISTORYFILE_ADD(r) */
+#define HISTORY_ADD(r) { \
+        .v = (const char *[]){ "/bin/sh", "-c", \
+             "uri=\"$(echo $0 | cut -d '\"' -f2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\"" \
+             " && hist_line=\"$(echo $(date +'(%Y-%m-%d %H:%M:%S)') $uri)\"" \
+             " && [ \"$(awk 'NR==1 {print $NF}' "HISTORYFILE")\" != \"$uri\" ]" \
+             " && sed -i \"1i $hist_line\" "HISTORYFILE, \
+             r, NULL \
+        } \
+}
+
+/* HISTORY_NAV*/
+#define HISTORY_NAV { \
+        .v = (const char *[]){ "/bin/sh", "-c", \
+             "hist_line=\"$(cat "HISTORYFILE" | dmenu -l 50 -p 'Goto history:' -w $1)\"" \
+             " && grep \"^$hist_line\$\" "HISTORYFILE ">/dev/null" \
+             " && uri=\"$(sed 's|^(.*) \\(.*\\)$|\\1|' <<<$hist_line)\"" \
+             " && xprop -id $1 -f _SURF_GO 8u -set _SURF_GO \"$uri\"", \
+             "surf-setprop", winid, NULL \
         } \
 }
 
 /* BOOKMARK_REMOVE_DMENU */
 #define BOOKMARK_REMOVE_DMENU { \
         .v = (const char *[]){ "/bin/sh", "-c", \
-             "line=\"$(cat "BOOKMARKFILE" | dmenu -n -p 'Delete bookmark:' -w $0)\"" \
-             "&& sed -i ${line}d "BOOKMARKFILE, winid, NULL \
+             "line=\"$(cat "BOOKMARKFILE" | dmenu -l 5 -n -p 'Delete bookmark:' -w $0)\"" \
+             " && sed -i $((line++))d "BOOKMARKFILE, winid, NULL \
         } \
 }
 
@@ -144,7 +171,7 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 #define BOOKMARK_REMOVE_URI(r) { \
         .v = (const char *[]){ "/bin/bash", "-c", \
         	"choice=\"$(echo 'n\ny' | dmenu -p 'Remove current uri from bookmarks? [yN]:' -w $0)\"; [[ \"$choice\" =~ [yY] ]]" \
-        	" && uri=\"$(xprop -id $0 $1 | cut -d \\\" -f 2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\" " \
+        	" && uri=\"$(xprop -id $0 $1 | cut -d '\"' -f 2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\" " \
             " && sed -i \"\\|$uri|d\" "BOOKMARKFILE, winid, r, NULL \
         } \
 }
@@ -182,7 +209,7 @@ void pass() {}
 static char *searchengine = "https://search.bus-hit.me/?q=";
 static Key keys[] = {
 	/* modifier              keyval          function    arg */
-	{ 0,                     GDK_KEY_o,      spawn,      SETPROP("_SURF_URI", "_SURF_GO", PROMPT_GO) },
+	{ 0,                     GDK_KEY_o,      spawn,      SETPROP_OPEN_URI("_SURF_URI", "_SURF_GO", PROMPT_GO) },
 	{ 0,                     GDK_KEY_slash,  spawn,      SETPROP("_SURF_FIND", "_SURF_FIND", PROMPT_FIND) },
 
 	{ 0,                     GDK_KEY_i,      insert,     { .i = 1 } },
@@ -206,10 +233,11 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_h,      scrollh,    { .i = -10 } },
 
 	// { MODKEY,                GDK_KEY_b,      loaduri,   { .v = HOME } },
-	{ MODKEY,                GDK_KEY_b,      selhist,    SELNAV },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      spawn,      BOOKMARK_ADD("_SURF_URI") },
 	{ MODKEY,                GDK_KEY_d,      spawn,      BOOKMARK_REMOVE_DMENU },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_d,      spawn,      BOOKMARK_REMOVE_URI("_SURF_URI") },
+
+	{ MODKEY,                GDK_KEY_m,      spawn,      HISTORY_NAV },
 
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_u,      download_current_uri, { 0 } },
 
@@ -242,7 +270,7 @@ static Key keys[] = {
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_i,      toggle,     { .i = LoadImages } },
 	// { MODKEY|GDK_SHIFT_MASK, GDK_KEY_b,      toggle,     { .i = ScrollBars } },
 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_t,      toggle,     { .i = StrictTLS } },
-	{ MODKEY,                GDK_KEY_m,      toggle,     { .i = Style } },
+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_m,      toggle,     { .i = Style } },
 
 	// the modal patch makes it so that no keys that are used in a mapping (without MODKEY)
 	// can be typed while in 'normal' mode. so we add all of these mappings for unused keys
@@ -253,7 +281,7 @@ static Key keys[] = {
 	{ 0,                     GDK_KEY_e,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_f,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_g,      pass,       { 0 } },
-	{ 0,                     GDK_KEY_m,      pass,       { 0 } },
+	// { 0,                     GDK_KEY_m,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_p,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_q,      pass,       { 0 } },
 	{ 0,                     GDK_KEY_s,      pass,       { 0 } },
@@ -269,7 +297,7 @@ static Key keys[] = {
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_e,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_g,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_i,      pass,       { 0 } },
-	{ 0|GDK_SHIFT_MASK,      GDK_KEY_m,      pass,       { 0 } },
+	// { 0|GDK_SHIFT_MASK,      GDK_KEY_m,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_o,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_p,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_q,      pass,       { 0 } },
