@@ -1524,6 +1524,7 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
 		c->title = uri;
 		c->https = c->insecure = 0;
 		seturiparameters(c, uri, loadtransient);
+		insertmode = 0;
 		if (c->errorpage)
 			c->errorpage = 0;
 		else
@@ -1533,6 +1534,7 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
 		setatom(c, AtomUri, uri);
 		c->title = uri;
 		seturiparameters(c, uri, loadtransient);
+		insertmode = 0;
 		break;
 	case WEBKIT_LOAD_COMMITTED:
 		setatom(c, AtomUri, uri);
