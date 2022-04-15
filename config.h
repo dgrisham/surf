@@ -129,8 +129,7 @@ static WebKitFindOptions findopts = WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE |
 /* BOOKMARK_ADD(r) */
 #define BOOKMARK_ADD(r) {\
         .v = (const char *[]){ "/bin/sh", "-c", \
-             "uri=\"$(echo $(xprop -id $0 $1) | cut -d '\"' -f2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//')\"" \
-        	 " && choice=\"$(echo 'y\nn' | dmenu -p \"Add $uri to bookmarks? [yN]:\" -w $0)\"; [[ \"$choice\" =~ [yY] ]]" \
+             "uri=\"$(echo $(xprop -id $0 $1) | cut -d '\"' -f2 | sed 's/.*https*:\\/\\/\\(www\\.\\)\\?//' | dmenu -e -u -p \"Add to bookmarks:\" -w $0)\"" \
              " && (echo \"$uri\" && cat "BOOKMARKFILE") | awk '!seen[$0]++' > "BOOKMARKFILE".tmp" \
              " && mv "BOOKMARKFILE".tmp "BOOKMARKFILE, \
              winid, r, NULL \
@@ -303,7 +302,7 @@ static Key keys[] = {
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_q,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_s,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_t,      pass,       { 0 } },
-	{ 0|GDK_SHIFT_MASK,      GDK_KEY_u,      pass,       { 0 } },
+	// { 0|GDK_SHIFT_MASK,      GDK_KEY_u,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_v,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_w,      pass,       { 0 } },
 	{ 0|GDK_SHIFT_MASK,      GDK_KEY_x,      pass,       { 0 } },
